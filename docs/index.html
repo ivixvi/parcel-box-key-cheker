@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宅配ボックス番号特定</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #007BFF;
+        }
+        p {
+            font-size: 14px;
+            color: #666;
+        }
+        a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .number-list {
+            margin-top: 20px;
+        }
+        .number-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .number-item input {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>宅配ボックス番号チェッカー</h1>
+        <p>
+            宅配ボックスの番号が不在票に記載された番号と違ったすべての人に送る ― <a href="https://github.com/ivixvi">@ivixvi</a>
+        </p>
+        <p>
+            GitHubリポジトリはこちら: <a href="https://github.com/ivixvi/parcel-box-key-cheker" target="_blank">https://github.com/ivixvi/parcel-box-key-cheker</a>
+        </p>
+        <label for="user-input">4桁の数字を入力してください:</label>
+        <input type="text" id="user-input" maxlength="4">
+        <button onclick="generateNumbers()">候補を表示</button>
+        <div class="number-list" id="number-list"></div>
+    </div>
+    <script>
+        function generateNumbers() {
+            const userInput = document.getElementById('user-input').value;
+            const numberList = document.getElementById('number-list');
+            numberList.innerHTML = '';
+
+            if (userInput.length !== 4 || isNaN(userInput)) {
+                alert('4桁の数字を入力してください。');
+                return;
+            }
+
+            const candidates = new Set();
+
+            // 1. 4桁を並べ替えてできる4桁
+            const permutations = permute(userInput.split(''));
+            permutations.forEach(num => candidates.add(num.join('')));
+
+            // 2. 4桁のうち1桁が上下にズレている
+            for (let i = 0; i < 4; i++) {
+                const numArray = userInput.split('');
+                numArray[i] = (parseInt(numArray[i]) + 1) % 10;
+                candidates.add(numArray.join(''));
+                numArray[i] = (parseInt(numArray[i]) + 8) % 10; // -1
+                candidates.add(numArray.join(''));
+            }
+
+            // 3. 4桁すべてが上にズレる、または下にズレる
+            const upShift = userInput.split('').map(digit => (parseInt(digit) + 1) % 10).join('');
+            const downShift = userInput.split('').map(digit => (parseInt(digit) + 9) % 10).join('');
+            candidates.add(upShift);
+            candidates.add(downShift);
+
+            // 4. 1と2の組み合わせパターン
+            permutations.forEach(num => {
+                for (let i = 0; i < 4; i++) {
+                    const numArray = num.slice();
+                    numArray[i] = (parseInt(numArray[i]) + 1) % 10;
+                    candidates.add(numArray.join(''));
+                    numArray[i] = (parseInt(numArray[i]) + 8) % 10; // -1
+                    candidates.add(numArray.join(''));
+                }
+            });
+
+            // Display candidates
+            candidates.forEach(number => {
+                const numberItem = document.createElement('div');
+                numberItem.className = 'number-item';
+                numberItem.innerHTML = `
+                    <input type="checkbox" id="number-${number}">
+                    <label for="number-${number}">${number}</label>
+                `;
+                numberList.appendChild(numberItem);
+            });
+        }
+
+        function permute(arr) {
+            if (arr.length <= 1) return [arr];
+            const result = [];
+            for (let i = 0; i < arr.length; i++) {
+                const rest = permute(arr.slice(0, i).concat(arr.slice(i + 1)));
+                rest.forEach(r => result.push([arr[i]].concat(r)));
+            }
+            return result;
+        }
+    </script>
+</body>
+</html>
