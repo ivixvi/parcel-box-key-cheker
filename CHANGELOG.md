@@ -2,6 +2,8 @@
 
 ## main
 
+## v0.1.0
+
 ### application
 
 - [UPDATE] リリース
